@@ -4,12 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "ch.modulo.cateatsplanet"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
+    signingConfigs {
+        getByName("debug") {
+            project.findProperty("MY_STORE_FILE")?.let { storeFile = file(it.toString()) }
+            project.findProperty("MY_STORE_PASSWORD")?.let { storePassword = it.toString() }
+            project.findProperty("MY_KEY_ALIAS")?.let { keyAlias = it.toString() }
+            project.findProperty("MY_KEY_PASSWORD")?.let { keyPassword = it.toString() }
         }
     }
+    namespace = "ch.modulo.cateatsplanet"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ch.modulo.cateatsplanet"
