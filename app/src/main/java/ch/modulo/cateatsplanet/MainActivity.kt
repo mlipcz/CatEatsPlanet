@@ -1,36 +1,37 @@
 package ch.modulo.cateatsplanet
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ import ch.modulo.cateatsplanet.ui.theme.CatEatsPlanetTheme
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,8 +52,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     shape = RectangleShape,
                 ) {
-                    var catX by remember { mutableFloatStateOf(500f) }
-                    var catY by remember { mutableFloatStateOf(500f) }
+                    val catController = rememberCatController()
                     val focusRequester = remember { FocusRequester() }
                     val density = LocalDensity.current
                     val catSizeDp = 150.dp
@@ -61,33 +62,31 @@ class MainActivity : ComponentActivity() {
                         val maxWidthPx = constraints.maxWidth.toFloat()
                         val maxHeightPx = constraints.maxHeight.toFloat()
 
+                        val infiniteTransition = rememberInfiniteTransition(label = "pupilTransition")
+                        val pupilRadiusFactor by infiniteTransition.animateFloat(
+                            initialValue = 0.01f,
+                            targetValue = 0.05f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(2000),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "pupilRadius"
+                        )
+
                         NightSkyBackground(
                             modifier = Modifier
                                 .focusRequester(focusRequester)
                                 .focusable()
                                 .onKeyEvent {
-                                    if (it.type == KeyEventType.KeyDown) {
-                                        val step = 30f
-                                        when (it.key) {
-                                            Key.DirectionUp -> catY = (catY - step).coerceAtLeast(0f)
-                                            Key.DirectionDown -> catY =
-                                                (catY + step).coerceAtMost(maxHeightPx - catSizePx)
-                                            Key.DirectionLeft -> catX =
-                                                (catX - step).coerceAtLeast(0f)
-                                            Key.DirectionRight -> catX =
-                                                (catX + step).coerceAtMost(maxWidthPx - catSizePx)
-                                        }
-                                        true
-                                    } else {
-                                        false
-                                    }
+                                    catController.handleKeyEvent(it, maxWidthPx, maxHeightPx, catSizePx)
                                 }
                         ) {
                             Box(modifier = Modifier.fillMaxSize()) {
                                 CatSprite(
                                     modifier = Modifier
-                                        .offset { IntOffset(catX.toInt(), catY.toInt()) }
-                                        .size(catSizeDp)
+                                        .offset { IntOffset(catController.x.toInt(), catController.y.toInt()) }
+                                        .size(catSizeDp),
+                                    pupilRadiusFactor = pupilRadiusFactor
                                 )
 
                                 Greeting(
@@ -141,6 +140,75 @@ fun NightSkyBackground(
             }
         }
         content()
+    }
+}
+
+@Composable
+fun CatSprite(
+    modifier: Modifier = Modifier,
+    pupilRadiusFactor: Float = 0.02f
+) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val catColor = Color(0xFF888888) // Gray cat
+
+        // Ears
+        val leftEar = Path().apply {
+            moveTo(w * 0.25f, h * 0.35f)
+            lineTo(w * 0.35f, h * 0.15f)
+            lineTo(w * 0.45f, h * 0.35f)
+            close()
+        }
+        drawPath(leftEar, catColor)
+
+        val rightEar = Path().apply {
+            moveTo(w * 0.55f, h * 0.35f)
+            lineTo(w * 0.65f, h * 0.15f)
+            lineTo(w * 0.75f, h * 0.35f)
+            close()
+        }
+        drawPath(rightEar, catColor)
+
+        // Head
+        drawOval(
+            color = catColor,
+            topLeft = Offset(w * 0.25f, h * 0.3f),
+            size = androidx.compose.ui.geometry.Size(w * 0.5f, h * 0.4f)
+        )
+
+        // Eyes
+        drawCircle(
+            color = Color.Yellow,
+            radius = w * 0.06f,
+            center = Offset(w * 0.4f, h * 0.45f)
+        )
+        drawCircle(
+            color = Color.Yellow,
+            radius = w * 0.06f,
+            center = Offset(w * 0.6f, h * 0.45f)
+        )
+
+        // Pupils
+        drawCircle(
+            color = Color.Black,
+            radius = w * pupilRadiusFactor,
+            center = Offset(w * 0.4f, h * 0.45f)
+        )
+        drawCircle(
+            color = Color.Black,
+            radius = w * pupilRadiusFactor,
+            center = Offset(w * 0.6f, h * 0.45f)
+        )
+
+        // Nose
+        val nosePath = Path().apply {
+            moveTo(w * 0.47f, h * 0.55f)
+            lineTo(w * 0.53f, h * 0.55f)
+            lineTo(w * 0.5f, h * 0.58f)
+            close()
+        }
+        drawPath(nosePath, Color(0xFFFFC0CB))
     }
 }
 

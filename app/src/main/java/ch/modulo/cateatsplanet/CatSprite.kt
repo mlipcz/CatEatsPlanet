@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 
 @Composable
-fun CatSprite(modifier: Modifier = Modifier.Companion) {
+fun CatSprite(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -17,8 +17,8 @@ fun CatSprite(modifier: Modifier = Modifier.Companion) {
 
         // Ears
         val leftEar = Path().apply {
-            moveTo(w * 0.25f, h * 0.35f)
-            lineTo(w * 0.35f, h * 0.15f)
+            moveTo(w * 0.30f, h * 0.39f)
+            lineTo(w * 0.32f, h * 0.15f)
             lineTo(w * 0.45f, h * 0.35f)
             close()
         }
@@ -26,8 +26,8 @@ fun CatSprite(modifier: Modifier = Modifier.Companion) {
 
         val rightEar = Path().apply {
             moveTo(w * 0.55f, h * 0.35f)
-            lineTo(w * 0.65f, h * 0.15f)
-            lineTo(w * 0.75f, h * 0.35f)
+            lineTo(w * 0.68f, h * 0.15f)
+            lineTo(w * 0.70f, h * 0.39f)
             close()
         }
         drawPath(rightEar, catColor)
