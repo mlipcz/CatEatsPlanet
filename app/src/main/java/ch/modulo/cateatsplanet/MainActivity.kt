@@ -13,17 +13,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -49,40 +50,51 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     shape = RectangleShape,
                 ) {
-                    var catX by remember { mutableStateOf(500f) }
-                    var catY by remember { mutableStateOf(500f) }
+                    var catX by remember { mutableFloatStateOf(500f) }
+                    var catY by remember { mutableFloatStateOf(500f) }
                     val focusRequester = remember { FocusRequester() }
+                    val density = LocalDensity.current
+                    val catSizeDp = 150.dp
+                    val catSizePx = with(density) { catSizeDp.toPx() }
 
-                    NightSkyBackground(
-                        modifier = Modifier
-                            .focusRequester(focusRequester)
-                            .focusable()
-                            .onKeyEvent {
-                                if (it.type == KeyEventType.KeyDown) {
-                                    val step = 30f
-                                    when (it.key) {
-                                        Key.DirectionUp -> catY -= step
-                                        Key.DirectionDown -> catY += step
-                                        Key.DirectionLeft -> catX -= step
-                                        Key.DirectionRight -> catX += step
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        val maxWidthPx = constraints.maxWidth.toFloat()
+                        val maxHeightPx = constraints.maxHeight.toFloat()
+
+                        NightSkyBackground(
+                            modifier = Modifier
+                                .focusRequester(focusRequester)
+                                .focusable()
+                                .onKeyEvent {
+                                    if (it.type == KeyEventType.KeyDown) {
+                                        val step = 30f
+                                        when (it.key) {
+                                            Key.DirectionUp -> catY = (catY - step).coerceAtLeast(0f)
+                                            Key.DirectionDown -> catY =
+                                                (catY + step).coerceAtMost(maxHeightPx - catSizePx)
+                                            Key.DirectionLeft -> catX =
+                                                (catX - step).coerceAtLeast(0f)
+                                            Key.DirectionRight -> catX =
+                                                (catX + step).coerceAtMost(maxWidthPx - catSizePx)
+                                        }
+                                        true
+                                    } else {
+                                        false
                                     }
-                                    true
-                                } else {
-                                    false
                                 }
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                CatSprite(
+                                    modifier = Modifier
+                                        .offset { IntOffset(catX.toInt(), catY.toInt()) }
+                                        .size(catSizeDp)
+                                )
+
+                                Greeting(
+                                    name = "kot",
+                                    modifier = Modifier.align(Alignment.BottomStart)
+                                )
                             }
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            CatSprite(
-                                modifier = Modifier
-                                    .offset { IntOffset(catX.toInt(), catY.toInt()) }
-                                    .size(100.dp)
-                            )
-                            
-                            Greeting(
-                                name = "kot",
-                                modifier = Modifier.align(Alignment.BottomStart)
-                            )
                         }
                     }
 
@@ -129,72 +141,6 @@ fun NightSkyBackground(
             }
         }
         content()
-    }
-}
-
-@Composable
-fun CatSprite(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val catColor = Color(0xFF888888) // Gray cat
-
-        // Ears
-        val leftEar = Path().apply {
-            moveTo(w * 0.25f, h * 0.35f)
-            lineTo(w * 0.35f, h * 0.15f)
-            lineTo(w * 0.45f, h * 0.35f)
-            close()
-        }
-        drawPath(leftEar, catColor)
-
-        val rightEar = Path().apply {
-            moveTo(w * 0.55f, h * 0.35f)
-            lineTo(w * 0.65f, h * 0.15f)
-            lineTo(w * 0.75f, h * 0.35f)
-            close()
-        }
-        drawPath(rightEar, catColor)
-
-        // Head
-        drawOval(
-            color = catColor,
-            topLeft = Offset(w * 0.25f, h * 0.3f),
-            size = androidx.compose.ui.geometry.Size(w * 0.5f, h * 0.4f)
-        )
-
-        // Eyes
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Pupils
-        drawCircle(
-            color = Color.Black,
-            radius = w * 0.02f,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Black,
-            radius = w * 0.02f,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Nose
-        val nosePath = Path().apply {
-            moveTo(w * 0.47f, h * 0.55f)
-            lineTo(w * 0.53f, h * 0.55f)
-            lineTo(w * 0.5f, h * 0.58f)
-            close()
-        }
-        drawPath(nosePath, Color(0xFFFFC0CB))
     }
 }
 
