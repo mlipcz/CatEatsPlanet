@@ -35,6 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalDensity
+import android.media.AudioAttributes
+import android.media.SoundPool
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -70,6 +74,26 @@ class MainActivity : ComponentActivity() {
                     val density = LocalDensity.current
                     val catSizeDp = 150.dp
                     val catSizePx = with(density) { catSizeDp.toPx() }
+                    val context = LocalContext.current
+
+                    val soundPool = remember {
+                        SoundPool.Builder()
+                            .setMaxStreams(1)
+                            .setAudioAttributes(
+                                AudioAttributes.Builder()
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                    .setUsage(AudioAttributes.USAGE_GAME)
+                                    .build()
+                            )
+                            .build()
+                    }
+                    val meowSoundId = remember { soundPool.load(context, R.raw.meow, 1) }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            soundPool.release()
+                        }
+                    }
 
                     var timeLeft by remember { mutableIntStateOf(60) }
 
@@ -149,6 +173,7 @@ class MainActivity : ComponentActivity() {
                                                 // Collision threshold (sum of radii)
                                                 if (distance < (catSizePx * 0.4f + (catSizePx * 0.6f) * 0.4f)) {
                                                     planets[index] = planet.copy(isEaten = true)
+                                                    soundPool.play(meowSoundId, 1f, 1f, 0, 0, 1f)
                                                 }
                                             }
                                         }
