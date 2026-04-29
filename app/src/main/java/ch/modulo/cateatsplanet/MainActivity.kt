@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,7 +43,16 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import ch.modulo.cateatsplanet.ui.theme.CatEatsPlanetTheme
 import kotlinx.coroutines.delay
+import kotlin.math.sqrt
 import kotlin.random.Random
+
+// Data class to track planet state
+data class PlanetData(
+    val name: String,
+    val color: Color,
+    val pos: Offset,
+    var isEaten: Boolean = false
+)
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -67,6 +77,26 @@ class MainActivity : ComponentActivity() {
                         if (timeLeft > 0) {
                             delay(1000L)
                             timeLeft--
+                        }
+                    }
+
+                    // Manage planets in state
+                    val planets = remember {
+                        mutableStateListOf<PlanetData>().apply {
+                            addAll(
+                                listOf(
+                                    "Mercury" to Color(0xFF9E9E9E),
+                                    "Venus" to Color(0xFFFDD835),
+                                    "Earth" to Color(0xFF2196F3),
+                                    "Mars" to Color(0xFFF44336),
+                                    "Jupiter" to Color(0xFFFFB74D),
+                                    "Saturn" to Color(0xFFFFF176),
+                                    "Uranus" to Color(0xFF80DEEA),
+                                    "Neptune" to Color(0xFF3F51B5)
+                                ).map { (name, color) ->
+                                    PlanetData(name, color, Offset(Random.nextFloat(), Random.nextFloat()))
+                                }
+                            )
                         }
                     }
 
@@ -99,10 +129,51 @@ class MainActivity : ComponentActivity() {
                                 .focusRequester(focusRequester)
                                 .focusable()
                                 .onKeyEvent {
-                                    catController.handleKeyEvent(it, maxWidthPx, maxHeightPx, catSizePx)
+                                    val handled = catController.handleKeyEvent(it, maxWidthPx, maxHeightPx, catSizePx)
+                                    if (handled) {
+                                        // Check collision with all planets
+                                        val catCenterX = catController.x + catSizePx / 2
+                                        val catCenterY = catController.y + catSizePx / 2
+
+                                        planets.forEachIndexed { index, planet ->
+                                            if (!planet.isEaten) {
+                                                val planetX = planet.pos.x * (maxWidthPx - catSizePx)
+                                                val planetY = planet.pos.y * (maxHeightPx - catSizePx)
+                                                val planetCenterX = planetX + (catSizePx * 0.6f) / 2
+                                                val planetCenterY = planetY + (catSizePx * 0.6f) / 2
+
+                                                val dx = catCenterX - planetCenterX
+                                                val dy = catCenterY - planetCenterY
+                                                val distance = sqrt(dx * dx + dy * dy)
+
+                                                // Collision threshold (sum of radii)
+                                                if (distance < (catSizePx * 0.4f + (catSizePx * 0.6f) * 0.4f)) {
+                                                    planets[index] = planet.copy(isEaten = true)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    handled
                                 }
                         ) {
                             Box(modifier = Modifier.fillMaxSize()) {
+                                planets.forEach { planet ->
+                                    if (!planet.isEaten) {
+                                        PlanetSprite(
+                                            modifier = Modifier
+                                                .offset {
+                                                    IntOffset(
+                                                        (planet.pos.x * (maxWidthPx - catSizePx)).toInt(),
+                                                        (planet.pos.y * (maxHeightPx - catSizePx)).toInt()
+                                                    )
+                                                }
+                                                .size(catSizeDp * 0.6f),
+                                            name = planet.name,
+                                            color = planet.color
+                                        )
+                                    }
+                                }
+
                                 CatSprite(
                                     modifier = Modifier
                                         .offset { IntOffset(catController.x.toInt(), catController.y.toInt()) }
@@ -118,7 +189,7 @@ class MainActivity : ComponentActivity() {
 
                                 Text(
                                     text = if (timeLeft > 0) timeLeft.toString() else "Next level",
-                                    color = Color.Cyan,
+                                    color = Color.Magenta,
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
                                         .padding(32.dp)
