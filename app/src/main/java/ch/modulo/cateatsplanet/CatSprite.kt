@@ -7,9 +7,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 
 @Composable
-fun CatSprite(modifier: Modifier = Modifier) {
+fun CatSprite(
+    modifier: Modifier = Modifier,
+    pupilRadiusFactor: Float = 0.02f,
+    whiskersFactor: Float = 0.02f
+) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -41,25 +48,25 @@ fun CatSprite(modifier: Modifier = Modifier) {
 
         // Eyes
         drawCircle(
-            color = Color.Companion.Yellow,
+            color = Color.Yellow,
             radius = w * 0.06f,
             center = Offset(w * 0.4f, h * 0.45f)
         )
         drawCircle(
-            color = Color.Companion.Yellow,
+            color = Color.Yellow,
             radius = w * 0.06f,
             center = Offset(w * 0.6f, h * 0.45f)
         )
 
         // Pupils
         drawCircle(
-            color = Color.Companion.Black,
-            radius = w * 0.02f,
+            color = Color.Black,
+            radius = w * pupilRadiusFactor,
             center = Offset(w * 0.4f, h * 0.45f)
         )
         drawCircle(
-            color = Color.Companion.Black,
-            radius = w * 0.02f,
+            color = Color.Black,
+            radius = w * pupilRadiusFactor,
             center = Offset(w * 0.6f, h * 0.45f)
         )
 
@@ -71,5 +78,47 @@ fun CatSprite(modifier: Modifier = Modifier) {
             close()
         }
         drawPath(nosePath, Color(0xFFFFC0CB))
+
+        drawMouth(w, h)
+
+        drawWhiskers(w, h, whiskersFactor)
     }
+}
+
+private fun DrawScope.drawWhiskers(
+    w: Float,
+    h: Float,
+    whiskersFactor: Float
+) {
+    for (i in -1..1)
+        drawLine(
+            color = Color.DarkGray,
+            start = Offset(w * 0.3f, h * (0.56f + whiskersFactor * i)),
+            end = Offset(w * 0.7f, h * (0.56f - whiskersFactor * i)),
+            strokeWidth = 0.005f * w,
+        )
+}
+
+private fun DrawScope.drawMouth(
+    w: Float,
+    h: Float
+) {
+    drawArc(
+        color = Color.Black,
+        startAngle = 0f,    // Starts on the right (3 on a clock)
+        sweepAngle = 150f,
+        useCenter = false,
+        topLeft = Offset(w * 0.35f, h * 0.52f),
+        size = Size(w * 0.15f, h * 0.15f),
+        style = Stroke(width = w * 0.02f, cap = StrokeCap.Round)
+    )
+    drawArc(
+        color = Color.Black,
+        startAngle = 180f,    // Starts on the right (3 on a clock)
+        sweepAngle = -150f,
+        useCenter = false,
+        topLeft = Offset(w * 0.50f, h * 0.52f),
+        size = Size(w * 0.15f, h * 0.15f),
+        style = Stroke(width = w * 0.02f, cap = StrokeCap.Round)
+    )
 }

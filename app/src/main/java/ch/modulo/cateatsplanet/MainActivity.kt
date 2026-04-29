@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -28,7 +31,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalDensity
@@ -39,6 +41,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import ch.modulo.cateatsplanet.ui.theme.CatEatsPlanetTheme
+import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
@@ -58,6 +61,15 @@ class MainActivity : ComponentActivity() {
                     val catSizeDp = 150.dp
                     val catSizePx = with(density) { catSizeDp.toPx() }
 
+                    var timeLeft by remember { mutableIntStateOf(60) }
+
+                    LaunchedEffect(key1 = timeLeft) {
+                        if (timeLeft > 0) {
+                            delay(1000L)
+                            timeLeft--
+                        }
+                    }
+
                     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                         val maxWidthPx = constraints.maxWidth.toFloat()
                         val maxHeightPx = constraints.maxHeight.toFloat()
@@ -71,6 +83,15 @@ class MainActivity : ComponentActivity() {
                                 repeatMode = RepeatMode.Reverse
                             ),
                             label = "pupilRadius"
+                        )
+                        val whiskersFactor by infiniteTransition.animateFloat(
+                            initialValue = 0.01f,
+                            targetValue = 0.07f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1237),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "whiskersAngle"
                         )
 
                         NightSkyBackground(
@@ -86,12 +107,21 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .offset { IntOffset(catController.x.toInt(), catController.y.toInt()) }
                                         .size(catSizeDp),
-                                    pupilRadiusFactor = pupilRadiusFactor
+                                    pupilRadiusFactor = pupilRadiusFactor,
+                                    whiskersFactor = whiskersFactor
                                 )
 
                                 Greeting(
                                     name = "kot",
-                                    modifier = Modifier.align(Alignment.BottomStart)
+                                    modifier = Modifier.align(Alignment.BottomStart).padding(32.dp)
+                                )
+
+                                Text(
+                                    text = if (timeLeft > 0) timeLeft.toString() else "Next level",
+                                    color = Color.Cyan,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(32.dp)
                                 )
                             }
                         }
@@ -144,80 +174,11 @@ fun NightSkyBackground(
 }
 
 @Composable
-fun CatSprite(
-    modifier: Modifier = Modifier,
-    pupilRadiusFactor: Float = 0.02f
-) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val catColor = Color(0xFF888888) // Gray cat
-
-        // Ears
-        val leftEar = Path().apply {
-            moveTo(w * 0.25f, h * 0.35f)
-            lineTo(w * 0.35f, h * 0.15f)
-            lineTo(w * 0.45f, h * 0.35f)
-            close()
-        }
-        drawPath(leftEar, catColor)
-
-        val rightEar = Path().apply {
-            moveTo(w * 0.55f, h * 0.35f)
-            lineTo(w * 0.65f, h * 0.15f)
-            lineTo(w * 0.75f, h * 0.35f)
-            close()
-        }
-        drawPath(rightEar, catColor)
-
-        // Head
-        drawOval(
-            color = catColor,
-            topLeft = Offset(w * 0.25f, h * 0.3f),
-            size = androidx.compose.ui.geometry.Size(w * 0.5f, h * 0.4f)
-        )
-
-        // Eyes
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Pupils
-        drawCircle(
-            color = Color.Black,
-            radius = w * pupilRadiusFactor,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Black,
-            radius = w * pupilRadiusFactor,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Nose
-        val nosePath = Path().apply {
-            moveTo(w * 0.47f, h * 0.55f)
-            lineTo(w * 0.53f, h * 0.55f)
-            lineTo(w * 0.5f, h * 0.58f)
-            close()
-        }
-        drawPath(nosePath, Color(0xFFFFC0CB))
-    }
-}
-
-@Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Kiedy $name nadchodzi, co zjada planety",
         modifier = modifier,
-        color = Color.White
+        color = Color.Cyan
     )
 }
 
