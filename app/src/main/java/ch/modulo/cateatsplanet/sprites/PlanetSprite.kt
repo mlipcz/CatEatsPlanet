@@ -45,12 +45,12 @@ fun PlanetSprite(
             }
             "Earth" -> {
                 drawCircle(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.5f),
+                    color = Color(0xFF4CAF50).copy(alpha = 0.8f),
                     radius = radius * 0.4f,
                     center = Offset(center.x + radius * 0.3f, center.y - radius * 0.2f)
                 )
                 drawCircle(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.3f),
+                    color = Color(0xFF4CAF50).copy(alpha = 0.5f),
                     radius = radius * 0.3f,
                     center = Offset(center.x - radius * 0.4f, center.y + radius * 0.1f)
                 )
@@ -59,7 +59,7 @@ fun PlanetSprite(
                 // Little crater or spot
                 drawCircle(
                     color = Color.Black.copy(alpha = 0.1f),
-                    radius = radius * 0.2f,
+                    radius = radius * 0.3f,
                     center = Offset(center.x + radius * 0.2f, center.y + radius * 0.3f)
                 )
             }
