@@ -1,4 +1,4 @@
-package ch.modulo.cateatsplanet
+package ch.modulo.cateatsplanet.sprites
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable

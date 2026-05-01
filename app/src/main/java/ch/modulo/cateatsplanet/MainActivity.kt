@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import ch.modulo.cateatsplanet.sprites.CatSprite
+import ch.modulo.cateatsplanet.sprites.PlanetSprite
 import ch.modulo.cateatsplanet.ui.theme.CatEatsPlanetTheme
 import kotlinx.coroutines.delay
 import kotlin.math.sqrt
@@ -156,7 +158,12 @@ fun GameContent(context: GameContext) {
 
         CatSprite(
             modifier = Modifier
-                .offset { IntOffset(context.catController.x.toInt(), context.catController.y.toInt()) }
+                .offset {
+                    IntOffset(
+                        context.catController.x.toInt(),
+                        context.catController.y.toInt()
+                    )
+                }
                 .size(context.catSizeDp),
             pupilRadiusFactor = context.pupilRadius,
             whiskersFactor = context.whiskersAngle
@@ -324,9 +331,11 @@ fun GreetingPreview() {
     CatEatsPlanetTheme {
         NightSkyBackground {
             Box(modifier = Modifier.fillMaxSize()) {
-                CatSprite(modifier = Modifier
-                    .offset(100.dp, 100.dp)
-                    .size(100.dp))
+                CatSprite(
+                    modifier = Modifier
+                        .offset(100.dp, 100.dp)
+                        .size(100.dp)
+                )
                 Greeting("kot")
             }
         }

@@ -1,4 +1,4 @@
-package ch.modulo.cateatsplanet
+package ch.modulo.cateatsplanet.sprites
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -114,7 +114,7 @@ private fun DrawScope.drawMouth(
     )
     drawArc(
         color = Color.Black,
-        startAngle = 180f,    // Starts on the right (3 on a clock)
+        startAngle = 180f,
         sweepAngle = -150f,
         useCenter = false,
         topLeft = Offset(w * 0.50f, h * 0.52f),
