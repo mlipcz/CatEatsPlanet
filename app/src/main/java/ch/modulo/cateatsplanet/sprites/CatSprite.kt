@@ -22,69 +22,93 @@ fun CatSprite(
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val catColor = CatGray // Gray cat
 
-        // Ears
-        val leftEar = Path().apply {
-            moveTo(w * 0.30f, h * 0.39f)
-            lineTo(w * 0.32f, h * 0.15f)
-            lineTo(w * 0.45f, h * 0.35f)
-            close()
-        }
-        drawPath(leftEar, catColor)
-
-        val rightEar = Path().apply {
-            moveTo(w * 0.55f, h * 0.35f)
-            lineTo(w * 0.68f, h * 0.15f)
-            lineTo(w * 0.70f, h * 0.39f)
-            close()
-        }
-        drawPath(rightEar, catColor)
-
-        // Head
-        drawOval(
-            color = catColor,
-            topLeft = Offset(w * 0.25f, h * 0.3f),
-            size = Size(w * 0.5f, h * 0.4f)
-        )
-
-        // Eyes
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Yellow,
-            radius = w * 0.06f,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Pupils
-        drawCircle(
-            color = Color.Black,
-            radius = w * pupilRadiusFactor,
-            center = Offset(w * 0.4f, h * 0.45f)
-        )
-        drawCircle(
-            color = Color.Black,
-            radius = w * pupilRadiusFactor,
-            center = Offset(w * 0.6f, h * 0.45f)
-        )
-
-        // Nose
-        val nosePath = Path().apply {
-            moveTo(w * 0.47f, h * 0.55f)
-            lineTo(w * 0.53f, h * 0.55f)
-            lineTo(w * 0.5f, h * 0.58f)
-            close()
-        }
-        drawPath(nosePath, CatNose)
-
+        drawEars(w, h, CatGray)
+        drawHead(w, h, CatGray)
+        drawEyes(w, h)
+        drawPupils(w, h, pupilRadiusFactor)
+        drawNose(w, h)
         drawMouth(w, h)
-
         drawWhiskers(w, h, whiskersFactor)
     }
+}
+
+private fun DrawScope.drawNose(w: Float, h: Float) {
+    val nosePath = Path().apply {
+        moveTo(w * 0.47f, h * 0.55f)
+        lineTo(w * 0.53f, h * 0.55f)
+        lineTo(w * 0.5f, h * 0.58f)
+        close()
+    }
+    drawPath(nosePath, CatNose)
+}
+
+private fun DrawScope.drawPupils(
+    w: Float,
+    h: Float,
+    pupilRadiusFactor: Float
+) {
+    drawCircle(
+        color = Color.Black,
+        radius = w * pupilRadiusFactor,
+        center = Offset(w * 0.4f, h * 0.45f)
+    )
+    drawCircle(
+        color = Color.Black,
+        radius = w * pupilRadiusFactor,
+        center = Offset(w * 0.6f, h * 0.45f)
+    )
+}
+
+private fun DrawScope.drawEyes(
+    w: Float,
+    h: Float
+) {
+    drawCircle(
+        color = Color.Yellow,
+        radius = w * 0.06f,
+        center = Offset(w * 0.4f, h * 0.45f)
+    )
+    drawCircle(
+        color = Color.Yellow,
+        radius = w * 0.06f,
+        center = Offset(w * 0.6f, h * 0.45f)
+    )
+}
+
+private fun DrawScope.drawHead(
+    w: Float,
+    h: Float,
+    catColor: Color
+) {
+    drawOval(
+        color = catColor,
+        topLeft = Offset(w * 0.25f, h * 0.3f),
+        size = Size(w * 0.5f, h * 0.4f)
+    )
+}
+
+private fun DrawScope.drawEars(
+    w: Float,
+    h: Float,
+    catColor: Color
+) {
+    // Ears
+    val leftEar = Path().apply {
+        moveTo(w * 0.30f, h * 0.39f)
+        lineTo(w * 0.32f, h * 0.15f)
+        lineTo(w * 0.45f, h * 0.35f)
+        close()
+    }
+    drawPath(leftEar, catColor)
+
+    val rightEar = Path().apply {
+        moveTo(w * 0.55f, h * 0.35f)
+        lineTo(w * 0.68f, h * 0.15f)
+        lineTo(w * 0.70f, h * 0.39f)
+        close()
+    }
+    drawPath(rightEar, catColor)
 }
 
 private fun DrawScope.drawWhiskers(

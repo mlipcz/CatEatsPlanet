@@ -14,7 +14,7 @@ import androidx.compose.ui.input.key.type
 /**
  * CatController using normalized coordinates (0.0f to 1.0f)
  */
-class CatController(initialX: Float, initialY: Float) {
+class Cat(initialX: Float, initialY: Float) {
     var x by mutableFloatStateOf(initialX)
         private set
     var y by mutableFloatStateOf(initialY)
@@ -49,6 +49,6 @@ class CatController(initialX: Float, initialY: Float) {
 }
 
 @Composable
-fun rememberCatController(initialX: Float = 0.5f, initialY: Float = 0.5f): CatController {
-    return remember { CatController(initialX, initialY) }
+fun rememberCatController(initialX: Float = 0.5f, initialY: Float = 0.5f): Cat {
+    return remember { Cat(initialX, initialY) }
 }

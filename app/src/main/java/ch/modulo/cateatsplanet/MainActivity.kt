@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -31,6 +32,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -53,12 +55,12 @@ data class PlanetData(
 
 data class GameContext(
     val planets: SnapshotStateList<PlanetData>,
-    val catController: CatController,
+    val cat: Cat,
     val timeLeft: Int,
     val maxWidth: Float,
     val maxHeight: Float,
     val catSizePx: Float,
-    val catSizeDp: androidx.compose.ui.unit.Dp,
+    val catSizeDp: Dp,
     val pupilRadius: Float,
     val whiskersAngle: Float
 )
@@ -80,7 +82,7 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CatEatsPlanetGame() {
-    val catController = rememberCatController(Random.nextFloat() * 0.9f, Random.nextFloat() * 0.9f)
+    val cat = rememberCatController(Random.nextFloat() * 0.9f, Random.nextFloat() * 0.9f)
     val focusRequester = remember { FocusRequester() }
     val catSizeDp = 150.dp
     val density = LocalDensity.current
@@ -93,14 +95,14 @@ fun CatEatsPlanetGame() {
         val maxWidth = constraints.maxWidth.toFloat()
         val maxHeight = constraints.maxHeight.toFloat()
 
-        val planets = rememberPlanetsState(catPosFactor = Offset(catController.x, catController.y))
+        val planets = rememberPlanetsState(catPos = Offset(cat.x, cat.y))
 
         val pupilRadius by animateFactor(0.01f, 0.05f, 2000)
         val whiskersAngle by animateFactor(0.01f, 0.07f, 1237)
 
         val gameContext = GameContext(
             planets,
-            catController,
+            cat,
             timeLeft,
             maxWidth,
             maxHeight,
@@ -115,7 +117,7 @@ fun CatEatsPlanetGame() {
                 .focusRequester(focusRequester)
                 .focusable()
                 .onKeyEvent {
-                    val handled = catController.handleKeyEvent(it, maxWidth, maxHeight, catSizePx)
+                    val handled = cat.handleKeyEvent(it, maxWidth, maxHeight, catSizePx)
                     if (handled) checkCollisions(gameContext, soundState)
                     handled
                 }
@@ -130,71 +132,101 @@ fun CatEatsPlanetGame() {
 @Composable
 fun GameContent(context: GameContext) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val planetSizeDp = context.catSizeDp * 0.6f
-        context.planets.forEach { planet ->
-            // Handle both fade-in and fade-out animations
-            LaunchedEffect(planet.isEaten) {
-                if (!planet.isEaten) {
-                    // Fade in on spawn
-                    if (planet.alpha.value == 0f) {
-                        val duration = Random.nextInt(1000, 5000)
-                        planet.alpha.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(durationMillis = duration, easing = LinearEasing)
-                        )
-                    }
-                } else {
-                    // Fade out when eaten
-                    planet.alpha.animateTo(
-                        targetValue = 0f,
-                        animationSpec = tween(durationMillis = 500)
-                    )
-                }
-            }
+        DrawPlanets(context)
+        DrawGreeting()
+        DrawTimer(context)
+        DrawCat(context)
+    }
+}
 
-            // Keep rendering while not eaten OR while still fading out
-            if (!planet.isEaten || planet.alpha.value > 0f) {
-                PlanetSprite(
-                    modifier = Modifier
-                        .offset {
-                            IntOffset(
-                                (planet.pos.x * (context.maxWidth - context.catSizePx)).toInt(),
-                                (planet.pos.y * (context.maxHeight - context.catSizePx)).toInt()
-                            )
-                        }
-                        .size(planetSizeDp)
-                        .graphicsLayer { alpha = planet.alpha.value },
-                    name = planet.name,
-                    color = planet.color
+@Composable
+private fun BoxScope.DrawGreeting() {
+    Greeting(
+        name = "kot", modifier = Modifier
+            .align(Alignment.BottomStart)
+            .padding(16.dp)
+    )
+}
+
+@Composable
+private fun BoxScope.DrawTimer(context: GameContext) {
+    Text(
+        text = if (context.timeLeft > 0) context.timeLeft.toString() else "koniec czasu",
+        color = Color.Magenta,
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(16.dp)
+    )
+}
+
+@Composable
+private fun DrawCat(context: GameContext) {
+    CatSprite(
+        modifier = Modifier
+            .offset {
+                IntOffset(
+                    (context.cat.x * context.maxWidth).toInt(),
+                    (context.cat.y * context.maxHeight).toInt()
                 )
             }
+            .size(context.catSizeDp),
+        pupilRadiusFactor = context.pupilRadius,
+        whiskersFactor = context.whiskersAngle
+    )
+}
+
+@Composable
+private fun DrawPlanets(context: GameContext) {
+    val planetSizeDp = context.catSizeDp * 0.6f
+    context.planets.forEach { planet ->
+        // Handle both fade-in and fade-out animations
+        LaunchedEffect(planet.isEaten) {
+            fadePlanet(planet)
         }
 
-        CatSprite(
+        // Keep rendering while not eaten OR while still fading out
+        DrawPlanet(planet, context, planetSizeDp)
+    }
+}
+
+@Composable
+private fun DrawPlanet(
+    planet: PlanetData,
+    context: GameContext,
+    planetSizeDp: Dp
+) {
+    if (!planet.isEaten || planet.alpha.value > 0f) {
+        PlanetSprite(
             modifier = Modifier
                 .offset {
                     IntOffset(
-                        (context.catController.x * context.maxWidth).toInt(),
-                        (context.catController.y * context.maxHeight).toInt()
+                        (planet.pos.x * (context.maxWidth - context.catSizePx)).toInt(),
+                        (planet.pos.y * (context.maxHeight - context.catSizePx)).toInt()
                     )
                 }
-                .size(context.catSizeDp),
-            pupilRadiusFactor = context.pupilRadius,
-            whiskersFactor = context.whiskersAngle
+                .size(planetSizeDp)
+                .graphicsLayer { alpha = planet.alpha.value },
+            name = planet.name,
+            color = planet.color
         )
+    }
+}
 
-        Greeting(
-            name = "kot", modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
-        )
-
-        Text(
-            text = if (context.timeLeft > 0) context.timeLeft.toString() else "Next level",
-            color = Color.Magenta,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
+private suspend fun fadePlanet(planet: PlanetData) {
+    if (!planet.isEaten) {
+        // Fade in on spawn
+        if (planet.alpha.value == 0f) {
+            val duration = Random.nextInt(1000, 5000)
+            planet.alpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = duration, easing = LinearEasing)
+            )
+        }
+    } else {
+        // Fade out when eaten
+        planet.alpha.animateTo(
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 500)
         )
     }
 }
@@ -231,14 +263,14 @@ fun rememberTimerState(initialTime: Int): Int {
 }
 
 @Composable
-fun rememberPlanetsState(catPosFactor: Offset): SnapshotStateList<PlanetData> {
+fun rememberPlanetsState(catPos: Offset): SnapshotStateList<PlanetData> {
     val planets = listOf(
         "Mercury" to MercuryColor, "Venus" to VenusColor,
         "Earth" to EarthColor, "Mars" to MarsColor,
         "Jupiter" to JupiterColor, "Saturn" to SaturnColor,
         "Uranus" to UranusColor, "Neptune" to NeptuneColor
     )
-    val (x, y) = planetLocations(planets, catPosFactor)
+    val (x, y) = planetLocations(planets.size, catPos)
     return remember {
         mutableStateListOf<PlanetData>().apply {
             addAll(planets.mapIndexed { i, (name, color) ->
@@ -250,13 +282,13 @@ fun rememberPlanetsState(catPosFactor: Offset): SnapshotStateList<PlanetData> {
 
 @Composable
 private fun planetLocations(
-    planets: List<Pair<String, Color>>,
+    planetCount: Int,
     catPosFactor: Offset
 ): Pair<Array<Float>, Array<Float>> {
-    val x = Array(planets.size) { 0f }
-    val y = Array(planets.size) { 0f }
+    val x = Array(planetCount) { 0f }
+    val y = Array(planetCount) { 0f }
     val minDist = 0.15f
-    for (i in 0..<planets.size) {
+    for (i in 0..<planetCount) {
         do {
             x[i] = Random.nextFloat()
             y[i] = Random.nextFloat()
@@ -293,8 +325,8 @@ fun checkCollisions(
     context: GameContext,
     sound: Pair<SoundPool, Int>
 ) {
-    val catCenterX = (context.catController.x * context.maxWidth) + context.catSizePx / 2
-    val catCenterY = (context.catController.y * context.maxHeight) + context.catSizePx / 2
+    val catCenterX = (context.cat.x * context.maxWidth) + context.catSizePx / 2
+    val catCenterY = (context.cat.y * context.maxHeight) + context.catSizePx / 2
     val planetSizePx = context.catSizePx * 0.6f
     val minDist = context.catSizePx * 0.27f + planetSizePx * 0.27f
 
