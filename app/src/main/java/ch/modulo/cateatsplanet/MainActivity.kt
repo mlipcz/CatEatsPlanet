@@ -132,15 +132,28 @@ fun GameContent(context: GameContext) {
     Box(modifier = Modifier.fillMaxSize()) {
         val planetSizeDp = context.catSizeDp * 0.6f
         context.planets.forEach { planet ->
-            if (!planet.isEaten) {
-                LaunchedEffect(planet) {
-                    val duration = Random.nextInt(1000, 5000)
+            // Handle both fade-in and fade-out animations
+            LaunchedEffect(planet.isEaten) {
+                if (!planet.isEaten) {
+                    // Fade in on spawn
+                    if (planet.alpha.value == 0f) {
+                        val duration = Random.nextInt(1000, 5000)
+                        planet.alpha.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(durationMillis = duration, easing = LinearEasing)
+                        )
+                    }
+                } else {
+                    // Fade out when eaten
                     planet.alpha.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(durationMillis = duration, easing = LinearEasing)
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 500)
                     )
                 }
+            }
 
+            // Keep rendering while not eaten OR while still fading out
+            if (!planet.isEaten || planet.alpha.value > 0f) {
                 PlanetSprite(
                     modifier = Modifier
                         .offset {
