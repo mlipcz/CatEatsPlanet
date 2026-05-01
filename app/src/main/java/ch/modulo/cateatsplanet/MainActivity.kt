@@ -6,11 +6,7 @@ import android.media.SoundPool
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -20,15 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +26,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -58,7 +47,8 @@ data class PlanetData(
     val name: String,
     val color: Color,
     val pos: Offset,
-    var isEaten: Boolean = false
+    var isEaten: Boolean = false,
+    val alpha: Animatable<Float, AnimationVector1D> = Animatable(0f)
 )
 
 data class GameContext(
@@ -141,6 +131,14 @@ fun GameContent(context: GameContext) {
         val planetSizeDp = context.catSizeDp * 0.6f
         context.planets.forEach { planet ->
             if (!planet.isEaten) {
+                LaunchedEffect(planet) {
+                    val duration = Random.nextInt(1000, 5000)
+                    planet.alpha.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = duration, easing = LinearEasing)
+                    )
+                }
+
                 PlanetSprite(
                     modifier = Modifier
                         .offset {
@@ -149,7 +147,8 @@ fun GameContent(context: GameContext) {
                                 (planet.pos.y * (context.maxHeight - context.catSizePx)).toInt()
                             )
                         }
-                        .size(planetSizeDp),
+                        .size(planetSizeDp)
+                        .graphicsLayer { alpha = planet.alpha.value },
                     name = planet.name,
                     color = planet.color
                 )
