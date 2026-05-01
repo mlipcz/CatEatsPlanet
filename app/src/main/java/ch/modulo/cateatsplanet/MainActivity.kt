@@ -38,7 +38,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import ch.modulo.cateatsplanet.sprites.CatSprite
 import ch.modulo.cateatsplanet.sprites.PlanetSprite
-import ch.modulo.cateatsplanet.ui.theme.CatEatsPlanetTheme
+import ch.modulo.cateatsplanet.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -233,10 +233,10 @@ fun rememberTimerState(initialTime: Int): Int {
 @Composable
 fun rememberPlanetsState(catPosFactor: Offset): SnapshotStateList<PlanetData> {
     val planets = listOf(
-        "Mercury" to Color(0xFF9E9E9E), "Venus" to Color(0xFFFDD835),
-        "Earth" to Color(0xFF2196F3), "Mars" to Color(0xFFF44336),
-        "Jupiter" to Color(0xFFFFB74D), "Saturn" to Color(0xFFFFF176),
-        "Uranus" to Color(0xFF80DEEA), "Neptune" to Color(0xFF3F51B5)
+        "Mercury" to MercuryColor, "Venus" to VenusColor,
+        "Earth" to EarthColor, "Mars" to MarsColor,
+        "Jupiter" to JupiterColor, "Saturn" to SaturnColor,
+        "Uranus" to UranusColor, "Neptune" to NeptuneColor
     )
     val (x, y) = planetLocations(planets, catPosFactor)
     return remember {
@@ -319,7 +319,7 @@ fun checkCollisions(
 @Composable
 fun NightSkyBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val skyColors =
-        listOf(Color(0xFF020111), Color(0xFF020111), Color(0xFF050a30), Color(0xFF000c40))
+        listOf(SkyDark, SkyDark, SkyDeepBlue, SkyMidnightBlue)
     Box(
         modifier = modifier
             .fillMaxSize()

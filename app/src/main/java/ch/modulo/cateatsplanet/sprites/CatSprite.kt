@@ -10,6 +10,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import ch.modulo.cateatsplanet.ui.theme.CatGray
+import ch.modulo.cateatsplanet.ui.theme.CatNose
 
 @Composable
 fun CatSprite(
@@ -20,7 +22,7 @@ fun CatSprite(
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val catColor = Color(0xFF888888) // Gray cat
+        val catColor = CatGray // Gray cat
 
         // Ears
         val leftEar = Path().apply {
@@ -77,7 +79,7 @@ fun CatSprite(
             lineTo(w * 0.5f, h * 0.58f)
             close()
         }
-        drawPath(nosePath, Color(0xFFFFC0CB))
+        drawPath(nosePath, CatNose)
 
         drawMouth(w, h)
 

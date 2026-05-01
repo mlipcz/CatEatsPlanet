@@ -7,6 +7,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import ch.modulo.cateatsplanet.ui.theme.EarthLandColor
+import ch.modulo.cateatsplanet.ui.theme.SaturnRingColor
 
 @Composable
 fun PlanetSprite(
@@ -27,7 +29,7 @@ fun PlanetSprite(
         when (name) {
             "Saturn" -> {
                 drawOval(
-                    color = Color(0xFFC5AB6E).copy(alpha = 0.7f),
+                    color = SaturnRingColor.copy(alpha = 0.7f),
                     topLeft = Offset(w * 0.05f, h * 0.42f),
                     size = Size(w * 0.9f, h * 0.16f),
                     style = Stroke(width = w * 0.04f)
@@ -45,12 +47,12 @@ fun PlanetSprite(
             }
             "Earth" -> {
                 drawCircle(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                    color = EarthLandColor.copy(alpha = 0.8f),
                     radius = radius * 0.4f,
                     center = Offset(center.x + radius * 0.3f, center.y - radius * 0.2f)
                 )
                 drawCircle(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.5f),
+                    color = EarthLandColor.copy(alpha = 0.5f),
                     radius = radius * 0.3f,
                     center = Offset(center.x - radius * 0.4f, center.y + radius * 0.1f)
                 )
