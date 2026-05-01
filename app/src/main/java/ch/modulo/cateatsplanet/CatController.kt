@@ -34,6 +34,6 @@ class CatController(initialX: Float, initialY: Float) {
 }
 
 @Composable
-fun rememberCatController(initialX: Float = 500f, initialY: Float = 500f): CatController {
+fun rememberCatController(initialX: Float = 150f, initialY: Float = 160f): CatController {
     return remember { CatController(initialX, initialY) }
 }
