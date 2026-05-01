@@ -80,18 +80,20 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CatEatsPlanetGame() {
-    val catController = rememberCatController()
+    val catController = rememberCatController(Random.nextFloat() * 0.9f, Random.nextFloat() * 0.9f)
     val focusRequester = remember { FocusRequester() }
     val catSizeDp = 150.dp
-    val catSizePx = with(LocalDensity.current) { catSizeDp.toPx() }
+    val density = LocalDensity.current
+    val catSizePx = with(density) { catSizeDp.toPx() }
 
     val soundState = rememberSoundState()
     val timeLeft = rememberTimerState(60)
-    val planets = rememberPlanetsState()
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val maxWidth = constraints.maxWidth.toFloat()
         val maxHeight = constraints.maxHeight.toFloat()
+
+        val planets = rememberPlanetsState(catPosFactor = Offset(catController.x, catController.y))
 
         val pupilRadius by animateFactor(0.01f, 0.05f, 2000)
         val whiskersAngle by animateFactor(0.01f, 0.07f, 1237)
@@ -159,8 +161,8 @@ fun GameContent(context: GameContext) {
             modifier = Modifier
                 .offset {
                     IntOffset(
-                        context.catController.x.toInt(),
-                        context.catController.y.toInt()
+                        (context.catController.x * context.maxWidth).toInt(),
+                        (context.catController.y * context.maxHeight).toInt()
                     )
                 }
                 .size(context.catSizeDp),
@@ -168,9 +170,11 @@ fun GameContent(context: GameContext) {
             whiskersFactor = context.whiskersAngle
         )
 
-        Greeting(name = "kot", modifier = Modifier
-            .align(Alignment.BottomStart)
-            .padding(16.dp))
+        Greeting(
+            name = "kot", modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        )
 
         Text(
             text = if (context.timeLeft > 0) context.timeLeft.toString() else "Next level",
@@ -214,14 +218,14 @@ fun rememberTimerState(initialTime: Int): Int {
 }
 
 @Composable
-fun rememberPlanetsState(): SnapshotStateList<PlanetData> {
+fun rememberPlanetsState(catPosFactor: Offset): SnapshotStateList<PlanetData> {
     val planets = listOf(
         "Mercury" to Color(0xFF9E9E9E), "Venus" to Color(0xFFFDD835),
         "Earth" to Color(0xFF2196F3), "Mars" to Color(0xFFF44336),
         "Jupiter" to Color(0xFFFFB74D), "Saturn" to Color(0xFFFFF176),
         "Uranus" to Color(0xFF80DEEA), "Neptune" to Color(0xFF3F51B5)
     )
-    val (x, y) = planetLocations(planets)
+    val (x, y) = planetLocations(planets, catPosFactor)
     return remember {
         mutableStateListOf<PlanetData>().apply {
             addAll(planets.mapIndexed { i, (name, color) ->
@@ -232,19 +236,27 @@ fun rememberPlanetsState(): SnapshotStateList<PlanetData> {
 }
 
 @Composable
-private fun planetLocations(planets: List<Pair<String, Color>>): Pair<Array<Float>, Array<Float>> {
+private fun planetLocations(
+    planets: List<Pair<String, Color>>,
+    catPosFactor: Offset
+): Pair<Array<Float>, Array<Float>> {
     val x = Array(planets.size) { 0f }
     val y = Array(planets.size) { 0f }
-    val minDist = 0.1f
+    val minDist = 0.15f
     for (i in 0..<planets.size) {
         do {
             x[i] = Random.nextFloat()
             y[i] = Random.nextFloat()
-            var collision = false
+            // Check collision with the cat
+            val distToCat =
+                sqrt((x[i] - catPosFactor.x) * (x[i] - catPosFactor.x) + (y[i] - catPosFactor.y) * (y[i] - catPosFactor.y))
+            var collision = distToCat < minDist
+            // Check collision with other planets
             for (j in 0..<i) {
                 val dist = sqrt((x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]))
                 collision = collision or (dist < minDist)
             }
+
         } while (collision)
     }
     return Pair(x, y)
@@ -268,8 +280,8 @@ fun checkCollisions(
     context: GameContext,
     sound: Pair<SoundPool, Int>
 ) {
-    val catCenterX = context.catController.x + context.catSizePx / 2
-    val catCenterY = context.catController.y + context.catSizePx / 2
+    val catCenterX = (context.catController.x * context.maxWidth) + context.catSizePx / 2
+    val catCenterY = (context.catController.y * context.maxHeight) + context.catSizePx / 2
     val planetSizePx = context.catSizePx * 0.6f
     val minDist = context.catSizePx * 0.27f + planetSizePx * 0.27f
 
@@ -295,9 +307,11 @@ fun checkCollisions(
 fun NightSkyBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val skyColors =
         listOf(Color(0xFF020111), Color(0xFF020111), Color(0xFF050a30), Color(0xFF000c40))
-    Box(modifier = modifier
-        .fillMaxSize()
-        .background(Brush.verticalGradient(skyColors))) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(skyColors))
+    ) {
         val stars = remember {
             List(300) {
                 Offset(

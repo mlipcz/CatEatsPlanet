@@ -11,22 +11,37 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 
+/**
+ * CatController using normalized coordinates (0.0f to 1.0f)
+ */
 class CatController(initialX: Float, initialY: Float) {
     var x by mutableFloatStateOf(initialX)
         private set
     var y by mutableFloatStateOf(initialY)
         private set
 
-    private var step = 30f
+    // Normalized step size (fraction of the screen)
+    private val step = 0.02f
 
-    fun handleKeyEvent(event: KeyEvent, maxWidth: Float, maxHeight: Float, catSize: Float): Boolean {
+    fun handleKeyEvent(
+        event: KeyEvent,
+        maxWidth: Float,
+        maxHeight: Float,
+        catSizePx: Float
+    ): Boolean {
         if (event.type != KeyEventType.KeyDown) return false
 
+        // Calculate steps relative to screen size to keep movement feeling consistent
+        // but we constrain the result in the 0..1 range.
+        // x and y represent the top-left of the cat in normalized space.
+        val xLimit = 1f - (catSizePx / maxWidth)
+        val yLimit = 1f - (catSizePx / maxHeight)
+
         when (event.key) {
-            Key.DirectionUp -> y = (y - step).coerceAtLeast(0f)
-            Key.DirectionDown -> y = (y + step).coerceAtMost(maxHeight - catSize)
-            Key.DirectionLeft -> x = (x - step).coerceAtLeast(0f)
-            Key.DirectionRight -> x = (x + step).coerceAtMost(maxWidth - catSize)
+            Key.DirectionUp -> y = (y - step).coerceIn(0f, yLimit)
+            Key.DirectionDown -> y = (y + step).coerceIn(0f, yLimit)
+            Key.DirectionLeft -> x = (x - step).coerceIn(0f, xLimit)
+            Key.DirectionRight -> x = (x + step).coerceIn(0f, xLimit)
             else -> return false
         }
         return true
@@ -34,6 +49,6 @@ class CatController(initialX: Float, initialY: Float) {
 }
 
 @Composable
-fun rememberCatController(initialX: Float = 150f, initialY: Float = 160f): CatController {
+fun rememberCatController(initialX: Float = 0.5f, initialY: Float = 0.5f): CatController {
     return remember { CatController(initialX, initialY) }
 }
